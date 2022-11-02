@@ -23,6 +23,13 @@ func newRoute(method, pattern string, handler http.HandlerFunc) route {
 	return route{method, regexp.MustCompile("^" + pattern + "$"), handler}
 }
 
+func ServerLog(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	})
+}
+
 type ctxKey struct{}
 
 func Serve(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +43,7 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 			}
 			ctx := context.WithValue(r.Context(), ctxKey{}, matches[1:])
 			route.handler(w, r.WithContext(ctx))
+			fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
 			return
 		}
 	}
