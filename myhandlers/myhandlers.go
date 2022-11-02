@@ -3,6 +3,7 @@ package myhandlers
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"regexp"
 	"strings"
@@ -55,8 +56,16 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+type HomePage struct {
+	Title string
+	Home  string
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "home\n")
+	//w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := HomePage{Title: "Welcome to my Website!", Home: "This is the HomePage"}
+	t, _ := template.ParseFiles("html/hometemplate.html")
+	fmt.Println(t.Execute(w, p))
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
