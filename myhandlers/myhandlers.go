@@ -56,18 +56,26 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-type HomePage struct {
+type homePage struct {
 	Title string
 	Home  string
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
-	//w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := HomePage{Title: "Welcome to my Website!", Home: "This is the HomePage"}
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := homePage{Title: "Welcome to my Website!", Home: "This is the HomePage"}
 	t, _ := template.ParseFiles("html/hometemplate.html")
 	fmt.Println(t.Execute(w, p))
 }
 
+type contactPage struct {
+	Title    string
+	Contacts string
+}
+
 func contact(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "contact\n")
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := contactPage{Title: "Contact me via: ", Contacts: "mark_tech@hotmail.com"}
+	t, _ := template.ParseFiles("html/contactstemplate.html")
+	fmt.Println(t.Execute(w, p))
 }
