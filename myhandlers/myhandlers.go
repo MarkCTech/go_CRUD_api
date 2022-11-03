@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/martoranam/go_site/hello"
 )
 
 type route struct {
@@ -18,6 +20,7 @@ type route struct {
 var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
+	newRoute("GET", "/helloworld", helloworld),
 }
 
 func newRoute(method, pattern string, handler http.HandlerFunc) route {
@@ -50,13 +53,13 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 }
 
 type homePage struct {
-	Title string
-	Home  string
+	Title   string
+	HomeMsg string
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := homePage{Title: "Welcome to my Website!", Home: "This is the HomePage"}
+	p := homePage{Title: "Welcome to my Website!", HomeMsg: "This is the HomePage"}
 	t, _ := template.ParseFiles("html/hometemplate.html")
 	fmt.Println(t.Execute(w, p))
 }
@@ -70,5 +73,19 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	p := contactPage{Title: "Contact me via: ", Contacts: "mark_tech@hotmail.com"}
 	t, _ := template.ParseFiles("html/contactstemplate.html")
+	fmt.Println(t.Execute(w, p))
+}
+
+type helloworldPage struct {
+	Title   string
+	HWprint string
+}
+
+func helloworld(w http.ResponseWriter, r *http.Request) {
+	var printable string = hello.World()
+
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := helloworldPage{Title: "This page should print a message!", HWprint: printable}
+	t, _ := template.ParseFiles("html/helloworldtemplate.html")
 	fmt.Println(t.Execute(w, p))
 }
