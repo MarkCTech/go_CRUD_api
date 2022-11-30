@@ -2,5 +2,5 @@ github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfC
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/martoranam/hello_world v0.0.0-20221125004448-354a6400dda3 h1:Auc/Sq77REjy9fAEyGQTEzNLqVZxRidGqEEHCFnh05g=
 github.com/martoranam/hello_world v0.0.0-20221125004448-354a6400dda3/go.mod h1:jcoHvAjA4mhsAfXJtS/vkXeqNJmmK+3Xla5Iu2Rs6rk=
-github.com/martoranam/sql_db v0.0.0-20221129165548-a2f8a426fc5b h1:t8Dzg8vVKeSPPPsmOW8ab8EZxb4UCrZR2kO0NU9Voyg=
-github.com/martoranam/sql_db v0.0.0-20221129165548-a2f8a426fc5b/go.mod h1:ltt2dTWUS0lCQYPzf/Q5nddt7OkAl6fVJdzh2SUEvNk=
+github.com/martoranam/sql_db v0.0.0-20221130193957-a07c35c1d00d h1:dr18rtXIMLNcG8K8yxDkMI22FSVNzSlEutYmFj5GEE0=
+github.com/martoranam/sql_db v0.0.0-20221130193957-a07c35c1d00d/go.mod h1:ltt2dTWUS0lCQYPzf/Q5nddt7OkAl6fVJdzh2SUEvNk=
