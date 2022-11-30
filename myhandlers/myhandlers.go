@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/martoranam/hello_world/helloworlder"
-	"github.com/martoranam/sql_db"
 )
 
 type route struct {
@@ -22,7 +21,10 @@ var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
 	newRoute("GET", "/helloworld", helloworld),
-	newRoute("GET", "/todos", todos),
+	newRoute("GET", "/todos", getalltodos),
+	newRoute("GET", "/todos:id", gettodosbyid),
+	newRoute("PATCH", "/todos:id", completetodosbyid),
+	newRoute("POST", "/todos", addtodo),
 }
 
 func newRoute(method, pattern string, handler http.HandlerFunc) route {
@@ -94,13 +96,4 @@ func helloworld(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("html/helloworldtemplate.html")
 	fmt.Println(r)
 	fmt.Println(t.Execute(w, p))
-}
-
-func todos(w http.ResponseWriter, r *http.Request) {
-	var inputstruct sql_db.Input
-	inputstruct.Title = "HELLOWORLD"
-	db := sql_db.Dbstart()
-	sql_db.AddTask(db, &inputstruct)
-	sql_db.Crudin1(db)
-
 }
