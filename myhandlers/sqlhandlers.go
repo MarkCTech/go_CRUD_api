@@ -8,15 +8,9 @@ import (
 	"github.com/martoranam/sql_db"
 )
 
-// type sqlinput struct {
-// 	sql_db.Task
-// }
-
-// type sqlreturn struct {
-// 	sql_db.Task
-// }
-
 var SqlHandlerDB *sql_db.Database
+var InputTask *sql_db.Task
+var ReturnedTask *sql_db.Task
 
 type AllTasksPage struct {
 	Title    string
@@ -35,13 +29,13 @@ func getalltodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func gettodosbyid(w http.ResponseWriter, r *http.Request) {
-
+	sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputTask)
 }
 
 func completetodosbyid(w http.ResponseWriter, r *http.Request) {
-
+	sql_db.CompleteTask(SqlHandlerDB.Db, InputTask)
 }
 
 func addtodo(w http.ResponseWriter, r *http.Request) {
-
+	sql_db.AddTask(SqlHandlerDB.Db, InputTask)
 }
