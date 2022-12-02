@@ -21,10 +21,9 @@ var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
 	newRoute("GET", "/helloworld", helloworld),
-	newRoute("GET", "/todos", getAllTodos),
-	newRoute("GET", "/todos/([0-9]+)", getTodosById),
-	//newRoute("GET", "/todos/:title", getTodosByTitle),
-	//newRoute("PATCH", "/todos/:id", completeTodosById),
+	newRoute("GET", "/todos(/?[A-Za-z0-9]*)", getTodos),
+	// newRoute("GET", "/todos/:title", getTodosByTitle),
+	newRoute("PATCH", "/todos/:id", completeTodosById),
 	newRoute("POST", "/todos", addTodo),
 }
 
@@ -37,7 +36,7 @@ type ctxKey struct{}
 func Serve(w http.ResponseWriter, r *http.Request) {
 	var allow []string
 	for _, route := range routes {
-		matches := route.regex.FindStringSubmatch(r.URL.Path)
+		matches := route.regex.FindStringSubmatchIndex(r.URL.Path)
 		if len(matches) > 0 {
 			if r.Method != route.method {
 				allow = append(allow, route.method)
