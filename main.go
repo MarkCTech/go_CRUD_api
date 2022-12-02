@@ -12,6 +12,7 @@ import (
 func main() {
 	database := sql_db.Dbstart("todosdb")
 	myhandlers.SqlHandlerDB = database
+	myhandlers.InputTask = &sql_db.Task{Title: "TESTENTRY"}
 	const port = 5000
 	router := http.HandlerFunc(myhandlers.Serve)
 	fmt.Printf("listening on port %d\n", port)
