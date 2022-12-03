@@ -1,7 +1,15 @@
 <h1>{{ .Title }}</h1>
 <body> 
 	<p>{{ .AllTasks }}</p>
-	<br><br>
+	<br>
+		<label for="inputname">Task Name:</label>
+		<input type="text" id="inputname" name="inputname"><br><br>
+		<label for="inputcomplete">Completed Status:</label>
+		<input type="checkbox" id="inputcomplete" name="inputcomplete"><br><br>
+		<a href="/todos">
+			<input type="submit" value="Submit"><br><br>
+		</a>
+	
 	<footer>
 		<a href="/">Home Page</a><br>
 		<a href="/contact">Contact me</a>
