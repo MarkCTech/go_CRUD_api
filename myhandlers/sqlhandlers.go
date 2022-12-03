@@ -1,13 +1,10 @@
 package myhandlers
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
-
-	// "regexp"
 
 	"github.com/martoranam/sql_db"
 )
@@ -28,8 +25,10 @@ func getAllTodos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: allTasks}
 	t, _ := template.ParseFiles("html/alltaskstemplate.html")
-	fmt.Println(r)
-	fmt.Println(t.Execute(w, p))
+	err := t.Execute(w, p)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
@@ -55,19 +54,23 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 			allTasks = sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputUrlTask)
 			p := TasksPage{Title: "Displaying Tasks by Title:", AllTasks: allTasks}
 			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-			fmt.Println(r)
-			fmt.Println(t.Execute(w, p))
+			err := t.Execute(w, p)
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
-		// If urlIndex is unchanged
+		// If urlIndex was changed by the int conversion of the second segment:
 		// sql query by int Id
 		if InputUrlTask.Id != urlIndex {
 			InputUrlTask.Id = urlIndex
 			allTasks = sql_db.GetTaskbyId(SqlHandlerDB.Db, InputUrlTask)
 			p := TasksPage{Title: "Displaying Tasks by ID:", AllTasks: allTasks}
 			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-			fmt.Println(r)
-			fmt.Println(t.Execute(w, p))
+			err := t.Execute(w, p)
+			if err != nil {
+				panic(err)
+			}
 			InputUrlTask.Id = 0
 			return
 		}
