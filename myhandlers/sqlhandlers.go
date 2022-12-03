@@ -23,7 +23,6 @@ type TasksPage struct {
 
 func getAllTodos(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
 	allTasks := sql_db.GetAllTasks(SqlHandlerDB.Db)
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
@@ -42,12 +41,14 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 	var allTasks []sql_db.Task
 
 	// If url longer than 2 segments:
-	//
+	// Check if trailing slash
 	if len(segments) > 2 {
 		if segments[2] == "" {
 			getAllTodos(w, r)
 			return
 		}
+		// If second segment is not assignable to an integer:
+		// sql query for []Task by string Title
 		urlIndex, err := strconv.Atoi(segments[2])
 		if err != nil {
 			InputUrlTask.Title = segments[2]
@@ -58,7 +59,8 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 			fmt.Println(t.Execute(w, p))
 			return
 		}
-
+		// If urlIndex is unchanged
+		// sql query by int Id
 		if InputUrlTask.Id != urlIndex {
 			InputUrlTask.Id = urlIndex
 			allTasks = sql_db.GetTaskbyId(SqlHandlerDB.Db, InputUrlTask)
@@ -72,16 +74,6 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 	}
 	getAllTodos(w, r)
 }
-
-// func getTodosByTitle(w http.ResponseWriter, r *http.Request) {
-// 	allTasks := sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputTask)
-
-// 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-// 	p := AllTasksPage{Title: "Displaying tasks by Title:", AllTasks: allTasks}
-// 	t, _ := template.ParseFiles("html/taskbytitletemplate.html")
-// 	fmt.Println(r)
-// 	fmt.Println(t.Execute(w, p))
-// }
 
 func completeTodosById(w http.ResponseWriter, r *http.Request) {
 	sql_db.CompleteTask(SqlHandlerDB.Db, InputUrlTask)
