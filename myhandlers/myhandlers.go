@@ -21,8 +21,7 @@ var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
 	newRoute("GET", "/helloworld", helloworld),
-	newRoute("GET", "/todos(/?[A-Za-z0-9]*)", getTodos),
-	// newRoute("GET", "/todos/:title", getTodosByTitle),
+	newRoute("GET", "/todos(/?[A-Za-z0-9]*)", getUrlTodos),
 	newRoute("PATCH", "/todos/:id", completeTodosById),
 	newRoute("POST", "/todos", addTodo),
 }
