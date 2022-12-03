@@ -21,17 +21,17 @@ type TasksPage struct {
 	AllTasks []sql_db.Task
 }
 
-// func getAllTodos(w http.ResponseWriter, r *http.Request) {
-// 	defer r.Body.Close()
+func getAllTodos(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
-// 	allTasks := sql_db.GetAllTasks(SqlHandlerDB.Db)
+	allTasks := sql_db.GetAllTasks(SqlHandlerDB.Db)
 
-// 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-// 	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: allTasks}
-// 	t, _ := template.ParseFiles("html/alltaskstemplate.html")
-// 	fmt.Println(r)
-// 	fmt.Println(t.Execute(w, p))
-// }
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: allTasks}
+	t, _ := template.ParseFiles("html/alltaskstemplate.html")
+	fmt.Println(r)
+	fmt.Println(t.Execute(w, p))
+}
 
 func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 	defer r.Body.Close()
@@ -44,6 +44,10 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 	// If url longer than 2 segments:
 	//
 	if len(segments) > 2 {
+		if segments[2] == "" {
+			getAllTodos(w, r)
+			return
+		}
 		urlIndex, err := strconv.Atoi(segments[2])
 		if err != nil {
 			InputUrlTask.Title = segments[2]
@@ -66,11 +70,7 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 			return
 		}
 	}
-	allTasks = sql_db.GetAllTasks(SqlHandlerDB.Db)
-	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: allTasks}
-	t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-	fmt.Println(r)
-	fmt.Println(t.Execute(w, p))
+	getAllTodos(w, r)
 }
 
 // func getTodosByTitle(w http.ResponseWriter, r *http.Request) {
