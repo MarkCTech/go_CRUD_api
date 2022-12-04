@@ -23,7 +23,7 @@ var routes = []route{
 	newRoute("GET", "/helloworld", helloworld),
 	newRoute("GET", "/todos(/?[A-Za-z0-9]*)", getUrlTodos),
 	newRoute("PATCH", "/todos/:id", completeTodosById),
-	newRoute("POST", "/todos", addTodo),
+	newRoute("POST", "/todos(/?[A-Za-z0-9]*)", addTodo),
 }
 
 func newRoute(method, pattern string, handler http.HandlerFunc) route {
@@ -43,7 +43,7 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 			}
 			ctx := context.WithValue(r.Context(), ctxKey{}, matches[1:])
 			route.handler(w, r.WithContext(ctx))
-			fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+			fmt.Printf("request.RemoteAddr: %s\nrequest.Method: %s\nrequest.URL: %s\n", r.RemoteAddr, r.Method, r.URL)
 			return
 		}
 	}
