@@ -12,6 +12,7 @@ import (
 var SqlHandlerDB *sql_db.Database
 var InputUrlTask *sql_db.Task
 var ReturnedTask *sql_db.Task
+var tasksPage TasksPage
 
 type TasksPage struct {
 	Title    string
@@ -20,10 +21,10 @@ type TasksPage struct {
 
 func getAllTodos(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	allTasks := sql_db.GetAllTasks(SqlHandlerDB.Db)
+	tasksPage.AllTasks = sql_db.GetAllTasks(SqlHandlerDB.Db)
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: allTasks}
+	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: tasksPage.AllTasks}
 	t, _ := template.ParseFiles("html/alltaskstemplate.html")
 	err := t.Execute(w, p)
 	if err != nil {
@@ -35,9 +36,7 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 	defer r.Body.Close()
 	path := r.URL.Path
 	segments := strings.Split(path, "/")
-
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	var allTasks []sql_db.Task
 
 	// If url longer than 2 segments:
 	// Check if trailing slash
@@ -51,8 +50,8 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 		urlIndex, err := strconv.Atoi(segments[2])
 		if err != nil {
 			InputUrlTask.Title = segments[2]
-			allTasks = sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputUrlTask)
-			p := TasksPage{Title: "Displaying Tasks by Title:", AllTasks: allTasks}
+			tasksPage.AllTasks = sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputUrlTask)
+			p := TasksPage{Title: "Displaying Tasks by Title:", AllTasks: tasksPage.AllTasks}
 			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
 			err := t.Execute(w, p)
 			if err != nil {
@@ -64,14 +63,13 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 		// sql query by int Id
 		if InputUrlTask.Id != urlIndex {
 			InputUrlTask.Id = urlIndex
-			allTasks = sql_db.GetTaskbyId(SqlHandlerDB.Db, InputUrlTask)
-			p := TasksPage{Title: "Displaying Tasks by ID:", AllTasks: allTasks}
+			tasksPage.AllTasks = sql_db.GetTaskbyId(SqlHandlerDB.Db, InputUrlTask)
+			p := TasksPage{Title: "Displaying Tasks by ID:", AllTasks: tasksPage.AllTasks}
 			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
 			err := t.Execute(w, p)
 			if err != nil {
 				panic(err)
 			}
-			InputUrlTask.Id = 0
 			return
 		}
 	}
@@ -83,5 +81,12 @@ func completeTodosById(w http.ResponseWriter, r *http.Request) {
 }
 
 func addTodo(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	InputUrlTask.Title = r.FormValue("inputTitle")
+	boolFromStr, err := strconv.ParseBool(r.FormValue("inputComplete"))
+	if err != nil {
+		InputUrlTask.Completed = boolFromStr
+	}
 	sql_db.AddTask(SqlHandlerDB.Db, InputUrlTask)
+	getAllTodos(w, r)
 }
