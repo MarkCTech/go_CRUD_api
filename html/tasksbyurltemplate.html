@@ -2,13 +2,13 @@
 <body> 
 	<p>{{ .AllTasks }}</p>
 	<br>
-	<label for="inputname">Task Name:</label>
-	<input type="text" id="inputname" name="inputname"><br><br>
-	<label for="inputcomplete">Completed Status:</label>
-	<input type="checkbox" id="inputcomplete" name="inputcomplete"><br><br>
-	<a href="/todos">
+	<form method="POST" action="todos">
+		<label for="inputTitle">Task Name:</label>
+		<input type="text" name="inputTitle"><br><br>
+		<label for="inputComplete">Completed Status:</label>
+		<input type="checkbox" name="inputComplete" data-val="true" value="true"><br><br>
 		<input type="submit" value="Submit"><br><br>
-	</a>
+	</form>
 	<br><br>
 	<footer>
 		<a href="/">Home Page</a><br>
