@@ -59,7 +59,7 @@ func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
 			}
 			return
 		}
-		// If urlIndex was successfully changed by the int conversion of the second segment:
+		// If urlIndex was changed by the int conversion of the second segment:
 		// sql query by int Id
 		if InputUrlTask.Id != urlIndex {
 			InputUrlTask.Id = urlIndex
@@ -83,12 +83,8 @@ func completeTodosById(w http.ResponseWriter, r *http.Request) {
 func addTodo(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	InputUrlTask.Title = r.FormValue("inputTitle")
-	inputFormValue := r.FormValue("inputComplete")
-	if inputFormValue != "" {
-		boolFromStr, err := strconv.ParseBool(inputFormValue)
-		if err != nil {
-			panic(err.Error())
-		}
+	boolFromStr, err := strconv.ParseBool(r.FormValue("inputComplete"))
+	if err != nil {
 		InputUrlTask.Completed = boolFromStr
 	}
 	sql_db.AddTask(SqlHandlerDB.Db, InputUrlTask)
