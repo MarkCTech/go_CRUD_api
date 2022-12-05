@@ -21,9 +21,10 @@ var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
 	newRoute("GET", "/helloworld", helloworld),
-	newRoute("GET", "/todos(/?[A-Za-z0-9]*)", getUrlTodos),
-	newRoute("PATCH", "/todos/:id", completeTodosById),
-	newRoute("POST", "/todos(/?[A-Za-z0-9]*)", addTodo),
+	newRoute("GET", "/todos", GetAllTodos),
+	newRoute("GET", "/todo/:id", GetTodobyId),
+	newRoute("PATCH", "/todo/:id", CompletebyId),
+	newRoute("POST", "/todos", AddTodo),
 }
 
 func newRoute(method, pattern string, handler http.HandlerFunc) route {

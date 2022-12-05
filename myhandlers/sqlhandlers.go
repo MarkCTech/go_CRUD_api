@@ -1,30 +1,44 @@
 package myhandlers
 
 import (
+	"encoding/json"
+	"errors"
 	"html/template"
+	"io"
 	"net/http"
 	"strconv"
-	"strings"
+	"sync"
 
 	"github.com/martoranam/sql_db"
+	"github.com/rs/xid"
 )
 
-var SqlHandlerDB *sql_db.Database
-var InputUrlTask *sql_db.Task
-var ReturnedTask *sql_db.Task
-var tasksPage TasksPage
+var (
+	Database *sql_db.Database
+	list     []sql_db.Task
+	mtx      sync.RWMutex
+	once     sync.Once
+)
 
-type TasksPage struct {
+type todosPage struct {
 	Title    string
 	AllTasks []sql_db.Task
 }
 
-func getAllTodos(w http.ResponseWriter, r *http.Request) {
+func init() {
+	once.Do(initialiseList)
+}
+
+func initialiseList() {
+	list = []sql_db.Task{}
+}
+
+func GetAllTodos(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	tasksPage.AllTasks = sql_db.GetAllTasks(SqlHandlerDB.Db)
+	list = sql_db.GetAllTasks(Database.Db)
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := TasksPage{Title: "Displaying All Tasks:", AllTasks: tasksPage.AllTasks}
+	p := todosPage{Title: "Displaying All Tasks:", AllTasks: list}
 	t, _ := template.ParseFiles("html/alltaskstemplate.html")
 	err := t.Execute(w, p)
 	if err != nil {
@@ -32,61 +46,111 @@ func getAllTodos(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getUrlTodos(w http.ResponseWriter, r *http.Request) { //8
+func GetTodobyId(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	path := r.URL.Path
-	segments := strings.Split(path, "/")
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-
-	// If url longer than 2 segments:
-	// Check if trailing slash
-	if len(segments) > 2 {
-		if segments[2] == "" {
-			getAllTodos(w, r)
-			return
-		}
-		// If second segment is not assignable to an integer:
-		// sql query for []Task by string Title
-		urlIndex, err := strconv.Atoi(segments[2])
-		if err != nil {
-			InputUrlTask.Title = segments[2]
-			tasksPage.AllTasks = sql_db.GetTaskbyTitle(SqlHandlerDB.Db, InputUrlTask)
-			p := TasksPage{Title: "Displaying Tasks by Title:", AllTasks: tasksPage.AllTasks}
-			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-			err := t.Execute(w, p)
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
-		// If urlIndex was changed by the int conversion of the second segment:
-		// sql query by int Id
-		if InputUrlTask.Id != urlIndex {
-			InputUrlTask.Id = urlIndex
-			tasksPage.AllTasks = sql_db.GetTaskbyId(SqlHandlerDB.Db, InputUrlTask)
-			p := TasksPage{Title: "Displaying Tasks by ID:", AllTasks: tasksPage.AllTasks}
-			t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-			err := t.Execute(w, p)
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
+	urlTask, httpStatus, err := convertHTTPBodyToTodo(r.Body)
+	if httpStatus != http.StatusOK {
+		panic(err.Error)
 	}
-	getAllTodos(w, r)
+
+	returnedTasks := sql_db.GetTaskbyId(Database.Db, urlTask.Id)
+
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	p := todosPage{Title: "Displaying Tasks by ID:", AllTasks: returnedTasks}
+	t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
+	err = t.Execute(w, p)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func completeTodosById(w http.ResponseWriter, r *http.Request) {
-	sql_db.CompleteTask(SqlHandlerDB.Db, InputUrlTask)
+func convertHTTPBodyToTodo(httpBody io.ReadCloser) (sql_db.Task, int, error) {
+	body, err := io.ReadAll(httpBody)
+	if err != nil {
+		return sql_db.Task{}, http.StatusInternalServerError, err
+	}
+	defer httpBody.Close()
+	return convertJSONBodyToTodo(body)
 }
 
-func addTodo(w http.ResponseWriter, r *http.Request) {
+func convertJSONBodyToTodo(jsonBody []byte) (sql_db.Task, int, error) {
+	var todoItem sql_db.Task
+	err := json.Unmarshal(jsonBody, &todoItem)
+	if err != nil {
+		return sql_db.Task{}, http.StatusBadRequest, err
+	}
+	return todoItem, http.StatusOK, nil
+}
+
+func newTodo(title string) sql_db.Task {
+	return sql_db.Task{
+		Id:        xid.New().String(),
+		Title:     title,
+		Completed: false,
+	}
+}
+
+func AddTodo(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	InputUrlTask.Title = r.FormValue("inputTitle")
+	title := r.FormValue("inputTitle")
+	parsedTodo := newTodo(title)
 	boolFromStr, err := strconv.ParseBool(r.FormValue("inputComplete"))
 	if err != nil {
-		InputUrlTask.Completed = boolFromStr
+		panic(err.Error)
 	}
-	sql_db.AddTask(SqlHandlerDB.Db, InputUrlTask)
-	getAllTodos(w, r)
+	parsedTodo.Completed = boolFromStr
+	mtx.Lock()
+	list = append(list, parsedTodo)
+	mtx.Unlock()
+	sql_db.AddTask(Database.Db, &parsedTodo)
+	GetAllTodos(w, r)
+}
+
+func CompletebyId(w http.ResponseWriter, r *http.Request) {
+	statusId := r.FormValue("inputTitle")
+	statusTodo := sql_db.Task{Id: statusId}
+	intId, err := strconv.Atoi(statusId)
+	if err != nil {
+		panic(err.Error())
+	}
+	// Updates local list and database
+	setTodoCompleteByLocation(intId)
+	sql_db.CompleteTask(Database.Db, &statusTodo)
+}
+
+func findTodoLocation(id string) (int, error) {
+	mtx.RLock()
+	defer mtx.RUnlock()
+	for i, t := range list {
+		if isMatchingID(t.Id, id) {
+			return i, nil
+		}
+	}
+	return 0, errors.New("could not find todo based on id")
+}
+
+func removeElementByLocation(i int) {
+	mtx.Lock()
+	list = append(list[:i], list[i+1:]...)
+	mtx.Unlock()
+}
+
+func setTodoCompleteByLocation(location int) {
+	mtx.Lock()
+	list[location].Completed = true
+	mtx.Unlock()
+}
+
+func isMatchingID(a string, b string) bool {
+	return a == b
+}
+
+// Delete will remove a Todo from the Todo list
+func DeletebyId(id string) error {
+	location, err := findTodoLocation(id)
+	if err != nil {
+		return err
+	}
+	removeElementByLocation(location)
+	return nil
 }
