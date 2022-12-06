@@ -1,8 +1,9 @@
 <h1>{{ .Title }}</h1>
 <body> 
 	<p>{{ .AllTasks }}</p>
-	<br>
-	<form method="POST" action="todo">
+	<br><br>
+	<h2>{{ .AddNewTitle }}</h2>
+	<form method="POST" action="addnew">
 		<label for="inputTitle">Task Name:</label>
 		<input type="text" name="inputTitle"><br><br>
 		<label for="inputComplete">Completed Status:</label>
