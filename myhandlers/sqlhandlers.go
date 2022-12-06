@@ -1,12 +1,11 @@
 package myhandlers
 
 import (
-	"encoding/json"
 	"errors"
 	"html/template"
-	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/martoranam/sql_db"
@@ -47,40 +46,45 @@ func GetAllTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTodobyId(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	urlTask, httpStatus, err := convertHTTPBodyToTodo(r.Body)
-	if httpStatus != http.StatusOK {
-		panic(err.Error)
-	}
-
-	returnedTasks := sql_db.GetTaskbyId(Database.Db, urlTask.Id)
-
+	path := r.URL.Path
+	segments := strings.Split(path, "/")
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := todosPage{Title: "Displaying Tasks by ID:", AllTasks: returnedTasks}
+	defer r.Body.Close()
+
+	urlIntIndex, err := strconv.ParseInt(segments[2], 10, 8)
+	switch {
+	case err == nil:
+		list = sql_db.GetTaskbyId(Database.Db, segments[2])
+	case urlIntIndex == 0:
+		list = sql_db.GetTaskbyTitle(Database.Db, segments[2])
+	default:
+		GetAllTodos(w, r)
+	}
+	p := todosPage{Title: "Displaying Tasks by URL index:", AllTasks: list}
 	t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
 	err = t.Execute(w, p)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
-func convertHTTPBodyToTodo(httpBody io.ReadCloser) (sql_db.Task, int, error) {
-	body, err := io.ReadAll(httpBody)
-	if err != nil {
-		return sql_db.Task{}, http.StatusInternalServerError, err
-	}
-	defer httpBody.Close()
-	return convertJSONBodyToTodo(body)
-}
+// func convertHTTPBodyToTodo(httpBody io.ReadCloser) (sql_db.Task, int, error) {
+// 	body, err := io.ReadAll(httpBody)
+// 	if err != nil {
+// 		return sql_db.Task{}, http.StatusInternalServerError, err
+// 	}
+// 	defer httpBody.Close()
+// 	return convertJSONBodyToTodo(body)
+// }
 
-func convertJSONBodyToTodo(jsonBody []byte) (sql_db.Task, int, error) {
-	var todoItem sql_db.Task
-	err := json.Unmarshal(jsonBody, &todoItem)
-	if err != nil {
-		return sql_db.Task{}, http.StatusBadRequest, err
-	}
-	return todoItem, http.StatusOK, nil
-}
+// func convertJSONBodyToTodo(jsonBody []byte) (sql_db.Task, int, error) {
+// 	var todoItem sql_db.Task
+// 	err := json.Unmarshal(jsonBody, &todoItem)
+// 	if err != nil {
+// 		return sql_db.Task{}, http.StatusBadRequest, err
+// 	}
+// 	return todoItem, http.StatusOK, nil
+// }
 
 func newTodo(title string) sql_db.Task {
 	return sql_db.Task{
@@ -94,11 +98,14 @@ func AddTodo(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	title := r.FormValue("inputTitle")
 	parsedTodo := newTodo(title)
-	boolFromStr, err := strconv.ParseBool(r.FormValue("inputComplete"))
-	if err != nil {
-		panic(err.Error)
+	parsedComplete := r.FormValue("inputComplete")
+	if parsedComplete != "" {
+		boolFromStr, err := strconv.ParseBool(parsedComplete)
+		if err != nil {
+			panic(err.Error)
+		}
+		parsedTodo.Completed = boolFromStr
 	}
-	parsedTodo.Completed = boolFromStr
 	mtx.Lock()
 	list = append(list, parsedTodo)
 	mtx.Unlock()
