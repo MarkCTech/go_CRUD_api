@@ -21,10 +21,11 @@ var routes = []route{
 	newRoute("GET", "/", home),
 	newRoute("GET", "/contact", contact),
 	newRoute("GET", "/helloworld", helloworld),
-	newRoute("GET", "/todos", GetAllTodos),
-	newRoute("GET", "/todo/:id", GetTodobyId),
-	newRoute("PATCH", "/todo/:id", CompletebyId),
-	newRoute("POST", "/todos", AddTodo),
+	newRoute("GET", "/todos(/?)", GetAllTodos),
+	newRoute("GET", "/todo(/?[A-Za-z0-9]*)", GetTodobyId),
+	newRoute("PATCH", "/todo(/?[A-Za-z0-9]*)", CompletebyId),
+	newRoute("POST", "/todos(/?[A-Za-z0-9]*)", AddTodo),
+	newRoute("POST", "/todo(/?[A-Za-z0-9]*)", AddTodo),
 }
 
 func newRoute(method, pattern string, handler http.HandlerFunc) route {
@@ -65,7 +66,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	p := homePage{Title: "Welcome to my Website!", HomeMsg: "This is the HomePage"}
 	t, _ := template.ParseFiles("html/hometemplate.html")
-	fmt.Println(r)
 	fmt.Println(t.Execute(w, p))
 }
 
@@ -78,7 +78,6 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	p := contactPage{Title: "Contact me via: ", Contacts: "mark_tech@hotmail.com"}
 	t, _ := template.ParseFiles("html/contactstemplate.html")
-	fmt.Println(r)
 	fmt.Println(t.Execute(w, p))
 }
 
@@ -94,6 +93,5 @@ func helloworld(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	p := helloworldPage{Title: "This page should print a message below!", HWprint: printable}
 	t, _ := template.ParseFiles("html/helloworldtemplate.html")
-	fmt.Println(r)
 	fmt.Println(t.Execute(w, p))
 }
