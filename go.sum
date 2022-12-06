@@ -4,3 +4,5 @@ github.com/martoranam/hello_world v0.0.0-20221125004448-354a6400dda3 h1:Auc/Sq77
 github.com/martoranam/hello_world v0.0.0-20221125004448-354a6400dda3/go.mod h1:jcoHvAjA4mhsAfXJtS/vkXeqNJmmK+3Xla5Iu2Rs6rk=
 github.com/martoranam/sql_db v0.0.0-20221130193957-a07c35c1d00d h1:dr18rtXIMLNcG8K8yxDkMI22FSVNzSlEutYmFj5GEE0=
 github.com/martoranam/sql_db v0.0.0-20221130193957-a07c35c1d00d/go.mod h1:ltt2dTWUS0lCQYPzf/Q5nddt7OkAl6fVJdzh2SUEvNk=
+github.com/rs/xid v1.4.0 h1:qd7wPTDkN6KQx2VmMBLrpHkiyQwgFXRnkOLacUiaSNY=
+github.com/rs/xid v1.4.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=

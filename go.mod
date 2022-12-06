@@ -7,4 +7,7 @@ require (
 	github.com/martoranam/sql_db v0.0.0-20221130193957-a07c35c1d00d
 )
 
-require github.com/go-sql-driver/mysql v1.6.0 // indirect
+require (
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/rs/xid v1.4.0
+)
