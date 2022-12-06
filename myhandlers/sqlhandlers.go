@@ -20,8 +20,9 @@ var (
 )
 
 type todosPage struct {
-	Title    string
-	AllTasks []sql_db.Task
+	Title       string
+	AddNewTitle string
+	AllTasks    []sql_db.Task
 }
 
 func init() {
@@ -37,7 +38,7 @@ func GetAllTodos(w http.ResponseWriter, r *http.Request) {
 	list = sql_db.GetAllTasks(Database.Db)
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := todosPage{Title: "Displaying All Tasks:", AllTasks: list}
+	p := todosPage{Title: "Displaying All Tasks:", AllTasks: list, AddNewTitle: "Add a new Task here: "}
 	t, _ := template.ParseFiles("html/alltaskstemplate.html")
 	err := t.Execute(w, p)
 	if err != nil {
@@ -60,31 +61,13 @@ func GetTodobyId(w http.ResponseWriter, r *http.Request) {
 	default:
 		GetAllTodos(w, r)
 	}
-	p := todosPage{Title: "Displaying Tasks by URL index:", AllTasks: list}
+	p := todosPage{Title: "Displaying Tasks by URL index:", AllTasks: list, AddNewTitle: "Add a new Task here: "}
 	t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
 	err = t.Execute(w, p)
 	if err != nil {
 		panic(err.Error())
 	}
 }
-
-// func convertHTTPBodyToTodo(httpBody io.ReadCloser) (sql_db.Task, int, error) {
-// 	body, err := io.ReadAll(httpBody)
-// 	if err != nil {
-// 		return sql_db.Task{}, http.StatusInternalServerError, err
-// 	}
-// 	defer httpBody.Close()
-// 	return convertJSONBodyToTodo(body)
-// }
-
-// func convertJSONBodyToTodo(jsonBody []byte) (sql_db.Task, int, error) {
-// 	var todoItem sql_db.Task
-// 	err := json.Unmarshal(jsonBody, &todoItem)
-// 	if err != nil {
-// 		return sql_db.Task{}, http.StatusBadRequest, err
-// 	}
-// 	return todoItem, http.StatusOK, nil
-// }
 
 func newTodo(title string) sql_db.Task {
 	return sql_db.Task{
@@ -113,17 +96,26 @@ func AddTodo(w http.ResponseWriter, r *http.Request) {
 	GetAllTodos(w, r)
 }
 
-func CompletebyId(w http.ResponseWriter, r *http.Request) {
-	statusId := r.FormValue("inputTitle")
-	statusTodo := sql_db.Task{Id: statusId}
-	intId, err := strconv.Atoi(statusId)
-	if err != nil {
-		panic(err.Error())
-	}
-	// Updates local list and database
-	setTodoCompleteByLocation(intId)
-	sql_db.CompleteTask(Database.Db, &statusTodo)
-}
+// func CompletebyId(w http.ResponseWriter, r *http.Request) {
+// 	inputId := r.FormValue("inputId")
+// 	inputComplete := r.FormValue("markComplete")
+// 	intId, err := strconv.Atoi(inputId)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+// 	statusTodo := new(sql_db.Task)
+// 	if inputComplete != "" {
+// 		boolFromStr, err := strconv.ParseBool(inputComplete)
+// 		if err != nil {
+// 			panic(err.Error)
+// 		}
+// 		statusTodo.Id = inputId
+// 		statusTodo.Completed = boolFromStr
+// 	}
+// 	// Updates local list and database
+// 	setTodoCompleteByLocation(intId)
+// 	sql_db.CompleteTask(Database.Db, statusTodo)
+// }
 
 func findTodoLocation(id string) (int, error) {
 	mtx.RLock()
@@ -142,11 +134,11 @@ func removeElementByLocation(i int) {
 	mtx.Unlock()
 }
 
-func setTodoCompleteByLocation(location int) {
-	mtx.Lock()
-	list[location].Completed = true
-	mtx.Unlock()
-}
+// func setTodoCompleteByLocation(location int) {
+// 	mtx.Lock()
+// 	list[location].Completed = true
+// 	mtx.Unlock()
+// }
 
 func isMatchingID(a string, b string) bool {
 	return a == b
