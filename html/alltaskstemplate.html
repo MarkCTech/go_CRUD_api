@@ -1,7 +1,6 @@
 <h1>{{ .Title }}</h1>
 <body> 
 	<p>{{ .AllTasks }}</p>
-	<br><br>
 	<h2>{{ .AddNewTitle }}</h2>
 	<form method="POST" action="todos">
 		<label for="inputTitle">Task Name:</label>
@@ -9,6 +8,14 @@
 		<label for="inputComplete">Completed Status:</label>
 		<input type="checkbox" name="inputComplete" data-val="true" value="true"><br><br>
 		<input type="submit" value="Submit"><br><br>
+	</form>
+
+	<form method="POST" action="todos/status">
+		<label for="statusId">Enter ID to edit complete status: </label>
+		<input type="text" name="statusId"><br><br>
+		<label for="statusComplete">Completed Status:</label>
+		<input type="checkbox" name="statusComplete" data-val="true" value="true"><br><br>
+		<input type="submit" value="complete"><br><br>
 	</form>
 
 	<form method="POST" action="todos/delete">

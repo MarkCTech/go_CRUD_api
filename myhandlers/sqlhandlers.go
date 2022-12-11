@@ -81,8 +81,8 @@ func AddTodo(c *gin.Context) {
 }
 
 func CompletebyId(c *gin.Context) {
-	parsedId := c.PostForm("inputId")
-	parsedComplete := c.PostForm("markComplete")
+	parsedId := c.PostForm("statusId")
+	parsedComplete := c.PostForm("statusComplete")
 
 	statusTodo := new(sql_db.Task)
 	if parsedComplete != "" {
