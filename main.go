@@ -29,6 +29,7 @@ func SetupRouter() *gin.Engine {
 	r.PATCH("/todos", myhandlers.CompletebyId)
 	r.PATCH("/todo/:id", myhandlers.CompletebyId)
 
+	r.POST("todos/delete", myhandlers.DeletebyId)
 	r.POST("todo/delete", myhandlers.DeletebyId)
 	return r
 }
