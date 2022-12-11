@@ -2,12 +2,11 @@ package myhandlers
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
+	"github.com/gin-gonic/gin"
 	"github.com/martoranam/sql_db"
 	"github.com/rs/xid"
 )
@@ -19,11 +18,11 @@ var (
 	once     sync.Once
 )
 
-type todosPage struct {
-	Title       string
-	AddNewTitle string
-	AllTasks    []sql_db.Task
-}
+// type todosPage struct {
+// 	Title       string
+// 	AddNewTitle string
+// 	AllTasks    []sql_db.Task
+// }
 
 func init() {
 	once.Do(initialiseList)
@@ -33,40 +32,29 @@ func initialiseList() {
 	list = []sql_db.Task{}
 }
 
-func GetAllTodos(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+func GetAllTodos(c *gin.Context) {
 	list = sql_db.GetAllTasks(Database.Db)
 
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	p := todosPage{Title: "Displaying All Tasks:", AllTasks: list, AddNewTitle: "Add a new Task here: "}
-	t, _ := template.ParseFiles("html/alltaskstemplate.html")
-	err := t.Execute(w, p)
-	if err != nil {
-		panic(err)
-	}
+	c.HTML(http.StatusOK, "alltaskstemplate.html", gin.H{
+		"Title":        "Displaying All Tasks:",
+		"AllTasks":     list,
+		"AddNewTitle:": "Add a new Task here: ",
+	})
 }
 
-func GetTodobyId(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-	segments := strings.Split(path, "/")
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	defer r.Body.Close()
+func GetTodobyId(c *gin.Context) {
+	id := c.Param("id")
+	list = sql_db.GetTaskbyId(Database.Db, id)
 
-	urlIntIndex, err := strconv.ParseInt(segments[2], 10, 8)
-	switch {
-	case err == nil:
-		list = sql_db.GetTaskbyId(Database.Db, segments[2])
-	case urlIntIndex == 0:
-		list = sql_db.GetTaskbyTitle(Database.Db, segments[2])
-	default:
-		GetAllTodos(w, r)
-	}
-	p := todosPage{Title: "Displaying Tasks by URL index:", AllTasks: list, AddNewTitle: "Add a new Task here: "}
-	t, _ := template.ParseFiles("html/tasksbyurltemplate.html")
-	err = t.Execute(w, p)
-	if err != nil {
-		panic(err.Error())
-	}
+	c.HTML(http.StatusOK, "tasksbyurltemplate.html", gin.H{
+		"Title":        "Displaying Tasks by URL index:",
+		"AllTasks":     list,
+		"AddNewTitle:": "Add a new Task here: ",
+	})
+}
+
+func PostNewTodoFromDetail(c *gin.Context) {
+
 }
 
 func newTodo(title string) sql_db.Task {
@@ -77,45 +65,59 @@ func newTodo(title string) sql_db.Task {
 	}
 }
 
-func AddTodo(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	title := r.FormValue("inputTitle")
-	parsedTodo := newTodo(title)
-	parsedComplete := r.FormValue("inputComplete")
+func AddTodo(c *gin.Context) {
+	parsedTitle := c.PostForm("inputTitle")
+	parsedComplete := c.PostForm("inputComplete")
+
+	toBeTodo := newTodo(parsedTitle)
 	if parsedComplete != "" {
 		boolFromStr, err := strconv.ParseBool(parsedComplete)
 		if err != nil {
 			panic(err.Error)
 		}
-		parsedTodo.Completed = boolFromStr
+		toBeTodo.Completed = boolFromStr
 	}
 	mtx.Lock()
-	list = append(list, parsedTodo)
+	list = append(list, toBeTodo)
 	mtx.Unlock()
-	sql_db.AddTask(Database.Db, &parsedTodo)
-	GetAllTodos(w, r)
+	sql_db.AddTask(Database.Db, &toBeTodo)
+	GetAllTodos(c)
 }
 
-// func CompletebyId(w http.ResponseWriter, r *http.Request) {
-// 	inputId := r.FormValue("inputId")
-// 	inputComplete := r.FormValue("markComplete")
-// 	intId, err := strconv.Atoi(inputId)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
-// 	statusTodo := new(sql_db.Task)
-// 	if inputComplete != "" {
-// 		boolFromStr, err := strconv.ParseBool(inputComplete)
-// 		if err != nil {
-// 			panic(err.Error)
-// 		}
-// 		statusTodo.Id = inputId
-// 		statusTodo.Completed = boolFromStr
-// 	}
-// 	// Updates local list and database
-// 	setTodoCompleteByLocation(intId)
-// 	sql_db.CompleteTask(Database.Db, statusTodo)
-// }
+func CompletebyId(c *gin.Context) {
+	parsedId := c.PostForm("inputId")
+	parsedComplete := c.PostForm("markComplete")
+	intId, err := strconv.Atoi(parsedId)
+	if err != nil {
+		panic(err.Error())
+	}
+	statusTodo := new(sql_db.Task)
+	if parsedComplete != "" {
+		boolFromStr, err := strconv.ParseBool(parsedComplete)
+		if err != nil {
+			panic(err.Error)
+		}
+		statusTodo.Id = parsedId
+		statusTodo.Completed = boolFromStr
+	}
+	// Updates local list and database
+	setTodoCompleteByLocation(intId)
+	sql_db.CompleteTask(Database.Db, statusTodo)
+}
+
+// Delete will remove a Todo from the Todo list
+func DeletebyId(c *gin.Context) {
+	id := c.Param("id")
+	deleteTodo := new(sql_db.Task)
+	deleteTodo.Id = id
+
+	location, err := findTodoLocation(id)
+	if err != nil {
+		panic(err.Error())
+	}
+	sql_db.DeleteTask(Database.Db, deleteTodo)
+	removeElementByLocation(location)
+}
 
 func findTodoLocation(id string) (int, error) {
 	mtx.RLock()
@@ -125,7 +127,7 @@ func findTodoLocation(id string) (int, error) {
 			return i, nil
 		}
 	}
-	return 0, errors.New("could not find todo based on id")
+	return 0, errors.New("could not find LOCAL todo based on id")
 }
 
 func removeElementByLocation(i int) {
@@ -134,22 +136,12 @@ func removeElementByLocation(i int) {
 	mtx.Unlock()
 }
 
-// func setTodoCompleteByLocation(location int) {
-// 	mtx.Lock()
-// 	list[location].Completed = true
-// 	mtx.Unlock()
-// }
+func setTodoCompleteByLocation(location int) {
+	mtx.Lock()
+	list[location].Completed = true
+	mtx.Unlock()
+}
 
 func isMatchingID(a string, b string) bool {
 	return a == b
-}
-
-// Delete will remove a Todo from the Todo list
-func DeletebyId(id string) error {
-	location, err := findTodoLocation(id)
-	if err != nil {
-		return err
-	}
-	removeElementByLocation(location)
-	return nil
 }

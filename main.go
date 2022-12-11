@@ -1,18 +1,34 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-
 	"github.com/martoranam/go_site/myhandlers"
 	"github.com/martoranam/sql_db"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	myhandlers.Database = sql_db.Dbstart("todosdb")
-	const port = 5000
-	router := http.HandlerFunc(myhandlers.Serve)
-	fmt.Printf("listening on port %d\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	r := SetupRouter()
+	r.Run(":5000")
+}
+
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
+	r.LoadHTMLGlob("html/*")
+
+	r.GET("/", myhandlers.Home)
+	r.GET("/contact", myhandlers.Contact)
+	r.GET("/helloworld", myhandlers.Helloworld)
+	r.GET("/todos", myhandlers.GetAllTodos)
+	r.GET("/todo/:id", myhandlers.GetTodobyId)
+
+	r.POST("/todos", myhandlers.AddTodo)
+	r.POST("/todo/:id", myhandlers.AddTodo)
+
+	r.PATCH("/todos", myhandlers.CompletebyId)
+	r.PATCH("/todo/:id", myhandlers.CompletebyId)
+
+	r.DELETE("todo/:id", myhandlers.DeletebyId)
+	return r
 }
