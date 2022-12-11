@@ -53,10 +53,6 @@ func GetTodobyId(c *gin.Context) {
 	})
 }
 
-func PostNewTodoFromDetail(c *gin.Context) {
-
-}
-
 func newTodo(title string) sql_db.Task {
 	return sql_db.Task{
 		Id:        xid.New().String(),
@@ -87,10 +83,7 @@ func AddTodo(c *gin.Context) {
 func CompletebyId(c *gin.Context) {
 	parsedId := c.PostForm("inputId")
 	parsedComplete := c.PostForm("markComplete")
-	intId, err := strconv.Atoi(parsedId)
-	if err != nil {
-		panic(err.Error())
-	}
+
 	statusTodo := new(sql_db.Task)
 	if parsedComplete != "" {
 		boolFromStr, err := strconv.ParseBool(parsedComplete)
@@ -101,22 +94,28 @@ func CompletebyId(c *gin.Context) {
 		statusTodo.Completed = boolFromStr
 	}
 	// Updates local list and database
+	intId, err := strconv.Atoi(parsedId)
+	if err != nil {
+		panic(err.Error())
+	}
 	setTodoCompleteByLocation(intId)
 	sql_db.CompleteTask(Database.Db, statusTodo)
+	GetAllTodos(c)
 }
 
 // Delete will remove a Todo from the Todo list
 func DeletebyId(c *gin.Context) {
-	id := c.Param("id")
+	id := c.PostForm("inputId")
 	deleteTodo := new(sql_db.Task)
 	deleteTodo.Id = id
+	sql_db.DeleteTask(Database.Db, deleteTodo)
 
 	location, err := findTodoLocation(id)
 	if err != nil {
 		panic(err.Error())
 	}
-	sql_db.DeleteTask(Database.Db, deleteTodo)
 	removeElementByLocation(location)
+	GetAllTodos(c)
 }
 
 func findTodoLocation(id string) (int, error) {
