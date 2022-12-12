@@ -1,5 +1,8 @@
 # Go_site
 ## Summary
-Regular expressions handle routing the correct pages for a website.
+A CRUD API written in Go!
+
+Gin router sends and recieves json to a MySQL database
+
  ## Using the program
 $go build && ./go_site
